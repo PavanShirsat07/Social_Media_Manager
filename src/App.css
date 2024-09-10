@@ -1,0 +1,225 @@
+.roboto{
+    font-family: 'Roboto', sans-serif;
+}
+/* Background and layout */
+.polaroid-container {
+    position: relative;
+    width: 350px;
+    height: 500px;
+    overflow: hidden;
+  }
+  
+  .background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(5px);
+    z-index: -1;
+  }
+  
+  /* Polaroid styling */
+  .polaroid {
+    position: absolute;
+    width: 200px;
+    padding: 10px;
+    background: white;
+    border: 10px solid white;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .polaroid img {
+    width: 100%;
+    height: auto;
+  }
+  
+  .caption {
+    margin-top: 5px;
+    font-size: 14px;
+  }
+  
+  /* Custom polaroid positions */
+  .polaroid-one {
+    top: 0%;
+    left: 30%;
+    transform: rotate(-5deg);
+  }
+  
+  .polaroid-two {
+    top: 30%;
+    left: 0%;
+    transform: rotate(3deg);
+  }
+  
+  .polaroid-three {
+    top: 60%;
+    left: 30%;
+    transform: rotate(-2deg);
+  }
+  
+  /* Tape styling */
+  .polaroid::before,
+  .polaroid::after {
+    content: "";
+    position: absolute;
+    width: 50px;
+    height: 15px;
+    background: rgba(192, 192, 192, 0.8);
+    top: -8px;
+    z-index: 1;
+  }
+  
+  .polaroid::before {
+    left: 20px;
+    transform: rotate(-10deg);
+  }
+  
+  .polaroid::after {
+    right: 20px;
+    transform: rotate(10deg);
+  }
+  
+
+
+  .torn-paper-card {
+    width: 300px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9f6f1; /* Light beige background */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    font-family: 'Dancing Script', cursive; /* Fancy font for the caption */
+    position: relative;
+  }
+  
+  .image-container {
+    width: 100%;
+    height: 70%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 20px;
+  }
+  
+  .main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    clip-path: polygon(
+      10% 0%, 90% 0%, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0% 90%, 0% 10%
+    ); /* Torn paper effect */
+  }
+  
+  .caption {
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  
+
+
+  .music-player-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 500px;
+    /* background-color: black; */
+    position: relative;
+  }
+  
+  .background-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 2;
+    z-index: 1;
+  }
+  
+  .player {
+    width: 300px;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 15px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .album-art {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .song-info {
+    text-align: center;
+    color: white;
+    /* margin-bottom: 10px; */
+  }
+  
+  .song-title {
+    font-weight: bold;
+    font-size: 18px;
+  }
+  
+  .artist-name {
+    font-size: 14px;
+  }
+  
+  .progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    color: white;
+    /* margin: 10px 0; */
+  }
+  
+  .progress {
+    flex-grow: 1;
+    height: 3px;
+    background-color: white;
+    margin: 0 10px;
+    border-radius: 5px;
+    position: relative;
+  }
+  
+  .progress-fill {
+    height: 50%;
+    background-color: white;
+    border-radius: 5px;
+  }
+  
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    color: white;
+    font-size: 24px;
+  }
+  
+  .controls i {
+    cursor: pointer;
+  }
+  
+  .controls i:hover {
+    color: #ccc;
+  }
+
+
