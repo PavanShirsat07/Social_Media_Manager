@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Bar, Line } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import { Chart, CategoryScale, LinearScale, BarElement, PointElement, LineElement } from 'chart.js';
-import { PI } from 'chart.js/helpers';
 
 Chart.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement);
 
 const FollowerGainChart = () => {
   const [selectedMonth, setSelectedMonth] = useState('2024-09'); // Default month
-  const [chartData, setChartData] = useState({
-    labels: [],
-    datasets: [],
-  });
+  const [chartData, setChartData] = useState({});
   const [isLoading, setIsLoading] = useState(false); // Track loading state
   const [error, setError] = useState(null); // Track error state
+
+  // Function to fetch data for the selected month with error handling
   const fetchData = async (month) => {
     setIsLoading(true);
     try {
@@ -22,32 +20,43 @@ const FollowerGainChart = () => {
       // Filter data to include only those entries that match the selected month
       const filteredData = data.filter(item => item.month === parseInt(month.split('-')[1], 10));
 
-      // Validate filtered data
-      if (!Array.isArray(filteredData) || filteredData.length === 0) {
-        throw new Error('No data available for the selected month');
-      }
+      // Group data by platform
+      const groupedData = filteredData.reduce((acc, item) => {
+        if (!acc[item.title]) {
+          acc[item.title] = { titles: [], followerGains: [], impressions: [] };
+        }
+        acc[item.title].titles.push(item.title);
+        acc[item.title].followerGains.push(item["follower gain"]);
+        acc[item.title].impressions.push(item.impressions);
+        return acc;
+      }, {});
 
-      setChartData({
-        labels: filteredData.map(item => item.title),
-        datasets: [
-          {
-            label: 'Follower Gain',
-            data: filteredData.map(item => item["follower gain"]),
-            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1,
-            yAxisID: 'y1',
-          },
-          {
-            label: 'Impressions (Reach)',
-            data: filteredData.map(item => item.impressions),
-            type: 'line',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            fill: false,
-            yAxisID: 'y2',
-          },
-        ],
+      const newChartData = {};
+      Object.keys(groupedData).forEach(platform => {
+        newChartData[platform] = {
+          labels: groupedData[platform].titles,
+          datasets: [
+            {
+              label: 'Follower Gain',
+              data: groupedData[platform].followerGains,
+              backgroundColor: 'rgba(54, 162, 235, 0.6)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1,
+              yAxisID: 'y1',
+            },
+            {
+              label: 'Impressions (Reach)',
+              data: groupedData[platform].impressions,
+              type: 'line',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              fill: false,
+              yAxisID: 'y2',
+            },
+          ],
+        };
       });
+
+      setChartData(newChartData);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -96,57 +105,41 @@ const FollowerGainChart = () => {
 
   return (
     <>
-    <div className='flex gap-10 justify-center'>
-    <div className='h-96 w-[600px]'>
-      <h2 className='ml-10 font-bold'>Follower Gains and Impressions Across Platforms</h2>
+      <div className="h-auto w-full flex flex-col items-center">
+        <h2>Follower Gains and Impressions Across Platforms</h2>
 
-      {/* Month Selector */}
-      <div className='ml-10'>
-      <label htmlFor="month">Select Month: </label>
-      <input
-        type="month"
-        id="month"
-        value={selectedMonth}
-        onChange={handleMonthChange}
-      />
+        {/* Month Selector */}
+        <label htmlFor="month">Select Month: </label>
+        <input
+          type="month"
+          id="month"
+          value={selectedMonth}
+          onChange={handleMonthChange}
+        />
+
+        {/* Loading indicator */}
+        {isLoading && <p>Loading...</p>}
+
+        {/* Error message */}
+        {error && <p>Error: {error}</p>}
+
+        {/* Charts */}
+        <div className="flex flex-wrap justify-center">
+          {!isLoading && !error && (
+            <>
+              {Object.keys(chartData).map((platform, index) => (
+                <div
+                  key={platform}
+                  className="w-[45%] h-[400px] m-4" // Adjust width and height
+                >
+                  <h3 className="text-center">{platform}</h3>
+                  <Line data={chartData[platform]} options={options} />
+                </div>
+              ))}
+            </>
+          )}
         </div>
-      {/* Loading indicator */}
-      {isLoading && <p>Loading...</p>}
-
-      {/* Error message */}
-      {error && <p>Error: {error}</p>}
-
-      {/* Chart */}
-      {!isLoading && !error && (
-        <Line data={chartData} options={options} />
-      )}
-    </div>
-
-    <div className='h-96 w-[600px]'>
-      <h2 className='ml-10 font-bold'>Follower Gains and Impressions Across Platforms</h2>
-
-      {/* Month Selector */}
-      <div className='ml-10'>
-      <label htmlFor="month">Select Month: </label>
-      <input
-        type="month"
-        id="month"
-        value={selectedMonth}
-        onChange={handleMonthChange}
-      />
-        </div>
-      {/* Loading indicator */}
-      {isLoading && <p>Loading...</p>}
-
-      {/* Error message */}
-      {error && <p>Error: {error}</p>}
-
-      {/* Chart */}
-      {!isLoading && !error && (
-        <Bar data={chartData} options={options} />
-      )}
-    </div>
-    </div>
+      </div>
     </>
   );
 };

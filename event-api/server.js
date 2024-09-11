@@ -8,7 +8,7 @@ const app = express();
 
 // Use the cors middleware to allow requests from the frontend
 app.use(cors({
-  origin: "http://localhost:5173" // Corrected CORS origin
+  origin: ["http://localhost:5173", "http://localhost:5174"] // Add more origins if needed
 }));
 
 // Body parser middleware
@@ -59,6 +59,7 @@ app.post('/mydatabase/events', async (req, res) => {
 });
 
 // Create an API route to get all events or filter by month
+// Create an API route to get all events or filter by month
 app.get('/mydatabase/events', async (req, res) => {
   const { month } = req.query;
 
@@ -67,29 +68,22 @@ app.get('/mydatabase/events', async (req, res) => {
     return res.status(400).json({ message: 'Month query parameter must be in the format YYYY-MM' });
   }
 
-  // Extract the year and month from the query (e.g., "2024-09")
-  const year = month.split('-')[0];
-  const monthPart = month.split('-')[1];
+  const [year, monthPart] = month.split('-');
+  const startDate = new Date(`${year}-${monthPart}-01T00:00:00Z`);
+  const endDate = new Date(`${year}-${(parseInt(monthPart) + 1).toString().padStart(2, '0')}-01T00:00:00Z`);
 
-  // Create date range for the month
+  // Ensure that if monthPart is "12", we adjust for the next year
+  if (monthPart === '12') {
+    endDate.setFullYear(startDate.getFullYear() + 1, 0, 1);
+  }
+
   try {
-    const startDate = new Date(`${year}-${monthPart}-01T00:00:00Z`);
-    const endDate = new Date(`${year}-${(parseInt(monthPart) + 1).toString().padStart(2, '0')}-01T00:00:00Z`);
-
-    // Ensure that if monthPart is "12", we adjust for the next year
-    if (monthPart === '12') {
-      endDate.setFullYear(startDate.getFullYear() + 1, 0, 1);
-    }
-
-    // Query to find events where the "start" date is within the month
     const events = await Event.find({
       start: {
         $gte: startDate,
         $lt: endDate
       }
     });
-
-    // Return the events
     res.json(events);
   } catch (err) {
     res.status(400).json({ message: 'Error fetching events', error: err.message });

@@ -6,63 +6,111 @@ import Modal from 'react-modal';
 Modal.setAppElement('#root'); // Important for accessibility
 
 const Calendar = () => {
+  const today = new Date();
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState(null);
-useEffect(() => {
-  fetch('http://localhost:5001/mydatabase/events')
-    .then(response => {
+  const [loading, setLoading] = useState(true);   
+  const [error, setError] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(today.toISOString().slice(0, 7));
+  const [filter, setFilter] = useState('');
+
+  const fetchEvents = async (month, filter = '') => {
+    try {
+      const response = await fetch(`http://localhost:5001/mydatabase/events?month=${month}`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      console.log("Connected to MOgodb")
-      return response.json();
-    })
-.then(data => {
-  console.log('Fetched data:', data); // Log the fetched data
-  const mappedEvents = data.map(event => ({
-    title: event.title,
-    start: new Date(event.start).toISOString(),
-    end: new Date(event.end).toISOString(),
-    extendedProps: {
-      info: event.info,
-      img: event.img,
-      like: event.like,
-      comment: event.comment,
-      shares: event.shares,
-      impressions: event.impressions
-    }
-  }));
+      const data = await response.json();
+      console.log('Fetched data:', data);
 
+      const filteredData = filter
+        ? data.filter(event => event.title.toLowerCase().includes(filter.toLowerCase()))
+        : data;
+
+      const mappedEvents = filteredData.map(event => ({
+        title: event.title,
+        start: new Date(event.start).toISOString(),
+        end: new Date(event.end).toISOString(),
+        extendedProps: {
+          info: event.info,
+          img: event.img,
+          like: event.like,
+          comment: event.comment,
+          shares: event.shares,
+          impressions: event.impressions,
+        },
+      }));
+
+      console.log('Mapped events:', mappedEvents);
       setEvents(mappedEvents);
       setLoading(false);
-    })
-    .catch(error => {
+    } catch (error) {
       setError('Error fetching events');
       setLoading(false);
       console.error('Error fetching events:', error);
-    });
-}, []);
-
-  
-
-  // Handle date click event (you can modify as needed)
-  const handleDateClick = (date) => {
-    console.log("Date clicked:", date); // Example: Log the clicked date to the console
+    }
   };
 
-  // Handle event click to show modal
+  useEffect(() => {
+    fetchEvents(currentMonth, filter); // Fetch events with the current filter
+  }, [currentMonth, filter]);
+
+  const handleDateClick = (date) => {
+    console.log("Date clicked:", date);
+  };
+
   const handleEventClick = (eventInfo) => {
     setSelectedEvent(eventInfo.event);
     setModalIsOpen(true);
   };
 
-  // Close the modal
   const closeModal = () => {
     setModalIsOpen(false);
     setSelectedEvent(null);
+  };
+
+  const handleDatesSet = (dateInfo) => {
+    const startDate = new Date(dateInfo.view.currentStart); // Get the start date of the current view
+    const month = (startDate.getMonth() + 1).toString().padStart(2, '0'); // Adjust for 0-based month index
+    const year = startDate.getFullYear(); // Get the updated year
+    const formattedDate = `${year}-${month}`; // Create the YYYY-MM format
+    
+    console.log('Formatted date:', formattedDate);
+    
+    // Only update if the month has actually changed
+    if (formattedDate !== currentMonth) {
+      setCurrentMonth(formattedDate);
+    }
+  };
+
+  // Button click handlers
+  const handleFacebookClick = () => {
+    setFilter('facebook');
+  };
+
+  const handleInstagramClick = () => {
+    setFilter('instagram');
+  };
+
+  const handleTwitterClick = () => {
+    setFilter('twitter');
+  };
+
+  const handleLinkedInClick = () => {
+    setFilter('linkedin');
+  };
+
+  const handleThreadClick = () => {
+    setFilter('thread');
+  };
+
+  const handleSnapchatClick = () => {
+    setFilter('snapchat');
+  };
+
+  const handleConnectToAllClick = () => {
+    setFilter('');  // Reset filter to show all events
   };
 
   return (
@@ -86,10 +134,13 @@ useEffect(() => {
 
           {/* Social media connections */}
           <div className="space-y-4">
-            <button className="bg-white w-full text-left py-2 px-2 rounded-md">Connect Facebook</button>
-            <button className="bg-white w-full text-left py-2 px-2 rounded-md">Connect Instagram</button>
-            <button className="bg-white w-full text-left py-2 px-2 rounded-md">Connect Twitter/X</button>
-            <button className="bg-white w-full text-left py-2 px-2 rounded-md">Connect LinkedIn</button>
+            <button className="bg-white w-full text-left py-2 px-2 rounded-md" onClick={handleFacebookClick}>Connect Facebook</button>
+            <button className="bg-white w-full text-left py-2 px-2 rounded-md" onClick={handleInstagramClick}>Connect Instagram</button>
+            <button className="bg-white w-full text-left py-2 px-2 rounded-md" onClick={handleTwitterClick}>Connect Twitter</button>
+            <button className="bg-white w-full text-left py-2 px-2 rounded-md" onClick={handleLinkedInClick}>Connect LinkedIn</button>
+            <button className="bg-white w-full text-left py-2 px-2 rounded-md" onClick={handleThreadClick}>Connect Thread</button>
+            <button className="bg-white w-full text-left py-2 px-2 rounded-md" onClick={handleSnapchatClick}>Connect Snapchat</button>
+            <button className="bg-white w-full text-left py-2 px-2 rounded-md" onClick={handleConnectToAllClick}>Connect TO All</button>
           </div>
 
           {/* Other buttons */}
@@ -101,55 +152,50 @@ useEffect(() => {
 
         {/* Calendar section */}
         <div className='flex-1 bg-white h-[600px] overflow-scroll'>
-        <FullCalendar
-  plugins={[dayGridPlugin]}
-  initialView="dayGridMonth"
-  selectable={true} // Allow date selection
-  select={handleDateClick} // Use 'select' instead of 'dateClick'
-  events={events}
-  eventClick={handleEventClick}
-/>
-
-
+          <FullCalendar
+            plugins={[dayGridPlugin]}
+            initialView="dayGridMonth"
+            selectable={true} // Allow date selection
+            select={handleDateClick}
+            events={events}  // Ensure this is the correctly formatted data
+            eventClick={handleEventClick}
+            datesSet={handleDatesSet}  // Triggered when the calendar view changes (month, week, etc.)
+          />
         </div>
       </div>
 
       {/* Modal for event details */}
       <Modal
-  isOpen={modalIsOpen}
-  onRequestClose={closeModal}
-  contentLabel="Event Details"
-  className="modal-content bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto mt-10 z-50 h-[430px]"
-  overlayClassName="modal-overlay fixed inset-0 bg-gray-800 bg-opacity-50 z-40"
->
-  {selectedEvent && (
-    <div>
-      <h2 className="text-2xl font-bold mb-2">{selectedEvent.title}</h2>
-      <div className='flex flex-col'>
-        <p className=' h-64 flex overflow-scroll flex-col overflow-x-hidden text-ellipsis'>
-          <div className=''>
-            {selectedEvent.extendedProps.img ? (
-              <img src={selectedEvent.extendedProps.img} alt="Event" className="h-26 w-auto mt-4 rounded-lg " onError={(e) => e.target.src = '/fallback-image.jpg'} />
-            ) : (
-              <img src="/default-image.jpg" alt="Event" className="h-26 w-auto mt-4 rounded-lg" />
-            )}
+        isOpen={modalIsOpen}
+        onRequestClose={closeModal}
+        contentLabel="Event Details"
+        className="modal-content bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto mt-10 z-50 h-[430px]"
+        overlayClassName="modal-overlay fixed inset-0 bg-gray-800 bg-opacity-50 z-40"
+      >
+        {selectedEvent && (
+          <div>
+            <h2 className="text-2xl font-bold mb-2">{selectedEvent.title}</h2>
+            <div className='flex flex-col'>
+              <p className=' h-64 flex overflow-scroll flex-col overflow-x-hidden text-ellipsis'>
+                <div className=''>
+                  {selectedEvent.extendedProps.img ? (
+                    <img src={selectedEvent.extendedProps.img} alt="Event" className="h-26 w-auto mt-4 rounded-lg " onError={(e) => e.target.src = '/fallback-image.jpg'} />
+                  ) : (
+                    <img src="/default-image.jpg" alt="Event" className="h-26 w-auto mt-4 rounded-lg" />
+                  )}
+                </div>
+                {selectedEvent.extendedProps.info}
+              </p>
+              <div className='flex mt-5 font-bold roboto gap-7'>
+                <div className='flex flex-col'><span className='text-gray-600'>Likes</span><span>{selectedEvent.extendedProps.like}</span></div>
+                <div className='flex flex-col'><span className='text-gray-600'>Comments</span><span>{selectedEvent.extendedProps.comment}</span></div>
+                <div className='flex flex-col'><span className='text-gray-600'>Shares</span><span>{selectedEvent.extendedProps.shares}</span></div>
+                <div className='flex flex-col'><span className='text-gray-600'>Impressions</span><span>{selectedEvent.extendedProps.impressions}</span></div>
+              </div>
+            </div>
           </div>
-          {selectedEvent.extendedProps.info}
-
-        </p>
-        <div className='flex mt-5 font-bold roboto gap-7'>
-          <div className='flex flex-col'><span className='text-gray-600'>Likes</span><span>  {selectedEvent.extendedProps.like}</span></div>
-          <div className='flex flex-col'><span className='text-gray-600'>Comments</span><span>{selectedEvent.extendedProps.comment}</span></div>
-          <div className='flex flex-col'><span className='text-gray-600'>Shares</span><span>{selectedEvent.extendedProps.shares}</span></div>
-          <div className='flex flex-col'><span className='text-gray-600'>Impressions</span><span>{selectedEvent.extendedProps.impressions}</span></div>
-        </div>
-      </div>
-    </div>
-  )}
-</Modal>
-
-
-
+        )}
+      </Modal>
     </>
   );
 };
